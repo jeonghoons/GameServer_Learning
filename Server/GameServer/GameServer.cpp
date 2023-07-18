@@ -4,64 +4,44 @@
 #include <thread>
 #include <atomic>
 #include <mutex>
+#include "AccountManager.h"
+#include "UserManager.h"
 
-vector<int32> v;
-
-// Mutual Exclusive(상호배타적)
-mutex m;
-
-// RAII 
-template<typename T>
-class LockGuard
+void Func1()
 {
-private:
-	T* _mutex;
-
-public:
-	LockGuard(T& m)
+	for (int i = 0; i < 100; ++i)
 	{
-		_mutex = &m;
-		_mutex->lock();
+		UserManager::Instance()->ProcessSave();
 	}
-	~LockGuard()
-	{
-		_mutex->unlock();
-	}
+}
 
-};
-
-void Push()
+void Func2()
 {
-	for (int32 i = 0; i < 1'0000; ++i)
+	for (int i = 0; i < 100; ++i)
 	{
-		// m.lock();
-
-		// LockGuard<std::mutex> lockGuard(m); // 자동으로 소멸하기 위해 락가드
-		std::lock_guard<std::mutex> lockGuard(m); // C++에서 지원해주는거
-
-		// std::unique_lock<std::mutex> uniqueLock(m, std::defer_lock); // 당장 락을 잠구진 않고 원하는 시점에서 lock가능
-		// uniqueLock.lock();
-
-		v.push_back(i);
-
-		if (i == 5000) {
-			// m.unlock();
-			break;
-		}
-
-		// m.unlock();
+		AccountManager::Instance()->ProcessLogin();
 	}
 }
 
 int main()
 {
-	v.reserve(2'0000);
-	std::thread t1(Push);
-	std::thread t2(Push);
+	std::thread t1(Func1);
+	std::thread t2(Func2);
 
 	t1.join();
 	t2.join();
 
-	cout << v.size() << endl;
+	cout << "Jobs Done" << endl;
+
+
+	// 참고
+	mutex m1;
+	mutex m2;
+
+	std::lock(m1, m2); // m1.lock(); m2.lock();
+
+	//adopt_lock : 이미 lock된 상태니까, 나중에 소멸될 때 풀어줘야됨 (힌트를 줌)
+	lock_guard<mutex> g1(m1, std::adopt_lock);
+	lock_guard<mutex> g2(m2, std::adopt_lock);
 }
 
