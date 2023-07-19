@@ -23,25 +23,89 @@ void Func2()
 	}
 }
 
+class SpinLock
+{
+public:
+	void lock()
+	{
+		// CAS (Compare-And_Swap) 필요
+		bool expected = false;
+		bool desired = true;
+
+		// CAS 의사 코드
+		/*if (_locked == expected) {
+			expected = _locked;
+			_locked = desired;
+			return true;
+		}
+		else {
+			expected = _locked;
+			return false;
+		}*/
+
+
+		while (_locked.compare_exchange_strong(expected, desired) == false) {
+			expected = false;
+		}
+
+
+		/*while (_locked) {
+
+		}
+		_locked = true;*/
+	}
+
+	void unlock()
+	{
+		
+		// _locked = false;
+		_locked.store(false);
+	}
+
+private:
+	atomic<bool> _locked = false; // 최적화 하지 않게
+};
+
+int sum = 0;
+mutex m;
+SpinLock spinLock;
+
+void Sum()
+{
+	for (int i = 0; i < 10'0000; ++i)
+	{
+		lock_guard<SpinLock> guard(spinLock);
+		sum++;
+	}
+}
+
+void Sub()
+{
+	for (int i = 0; i < 10'0000; ++i)
+	{
+		lock_guard<SpinLock> guard(spinLock);
+		sum--;
+	}
+}
+
 int main()
 {
-	std::thread t1(Func1);
+	/*std::thread t1(Func1);
 	std::thread t2(Func2);
 
 	t1.join();
 	t2.join();
 
-	cout << "Jobs Done" << endl;
+	cout << "Jobs Done" << endl;*/
 
+	thread t1(Sum);
+	thread t2(Sub);
 
-	// 참고
-	mutex m1;
-	mutex m2;
+	t1.join();
+	t2.join();
 
-	std::lock(m1, m2); // m1.lock(); m2.lock();
+	cout << sum << endl;
 
-	//adopt_lock : 이미 lock된 상태니까, 나중에 소멸될 때 풀어줘야됨 (힌트를 줌)
-	lock_guard<mutex> g1(m1, std::adopt_lock);
-	lock_guard<mutex> g2(m2, std::adopt_lock);
+	
 }
 
