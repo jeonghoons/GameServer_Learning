@@ -4,115 +4,59 @@
 #include <thread>
 #include <atomic>
 #include <mutex>
-#include "AccountManager.h"
-#include "UserManager.h"
+#include <Windows.h>
 
-void Func1()
+mutex m;
+queue<int> q;
+HANDLE handle;
+
+void Producer()
 {
-	for (int i = 0; i < 100; ++i)
-	{
-		UserManager::Instance()->ProcessSave();
-	}
-}
-
-void Func2()
-{
-	for (int i = 0; i < 100; ++i)
-	{
-		AccountManager::Instance()->ProcessLogin();
-	}
-}
-
-class SpinLock
-{
-public:
-	void lock()
-	{
-		// CAS (Compare-And_Swap) 필요
-		bool expected = false;
-		bool desired = true;
-
-		// CAS 의사 코드
-		/*if (_locked == expected) {
-			expected = _locked;
-			_locked = desired;
-			return true;
-		}
-		else {
-			expected = _locked;
-			return false;
-		}*/
-
-
-		while (_locked.compare_exchange_strong(expected, desired) == false) 
-		{
-			expected = false;
-
-			// 문맥교환 최소화 하기위해 사용
-			// 이 쓰레드는 100ms동안 재스케줄링이 되지않는다.
-			// this_thread::sleep_for(std::chrono::milliseconds(100)); 
-			this_thread::sleep_for(100ms); // 위랑 똑같음 
-			// this_thread::yield(); // sleep_for(0ms)와 같음, 언제든지 다시 스케줄링이 될수있지만 반환
-		}
-
-
-		/*while (_locked) {
-
-		}
-		_locked = true;*/
-	}
-
-	void unlock()
+	while (true)
 	{
 		
-		// _locked = false;
-		_locked.store(false);
+		{
+			unique_lock<mutex> lock(m);
+			q.push(100);
+		}
+
+		::SetEvent(handle); // 이벤트의 시그널상태 변경
+
+		this_thread::sleep_for(3s);
 	}
 
-private:
-	atomic<bool> _locked = false; // 최적화 하지 않게
-};
-
-int sum = 0;
-mutex m;
-SpinLock spinLock;
-
-void Sum()
-{
-	for (int i = 0; i < 10'0000; ++i)
-	{
-		lock_guard<SpinLock> guard(spinLock);
-		sum++;
-	}
+	
 }
 
-void Sub()
+void Consumer()
 {
-	for (int i = 0; i < 10'0000; ++i)
+	while (true)
 	{
-		lock_guard<SpinLock> guard(spinLock);
-		sum--;
+		// 무한루프를 도는게 아니라 (set을)대기하여 무의미하게 실행되는것을 막아줌
+		::WaitForSingleObject(handle, INFINITE); // 이벤트가 발생하여 시그널이 바뀌면 깨운다.
+		// 그리고 오토리셋이기 때문에 다시 non-signal로 변경됨-> 오토가 아니면 ResetEvent(handle)로 바꿔줘야됨
+
+
+		unique_lock<mutex> lock(m);
+		if (q.empty() == false) {
+			int data = q.front();
+			q.pop();
+			cout << data << endl;
+		}
 	}
 }
 
 int main()
 {
-	/*std::thread t1(Func1);
-	std::thread t2(Func2);
+	// 커널 오브젝트
+	handle = ::CreateEvent(NULL, FALSE/*자동리셋*/, FALSE/*초기값(시그널)*/, NULL);
+
+	thread t1(Producer);
+	thread t2(Consumer);
 
 	t1.join();
 	t2.join();
 
-	cout << "Jobs Done" << endl;*/
-
-	thread t1(Sum);
-	thread t2(Sub);
-
-	t1.join();
-	t2.join();
-
-	cout << sum << endl;
-
-	
+	::CloseHandle(handle);
 }
 
