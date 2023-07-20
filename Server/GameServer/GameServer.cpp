@@ -44,8 +44,15 @@ public:
 		}*/
 
 
-		while (_locked.compare_exchange_strong(expected, desired) == false) {
+		while (_locked.compare_exchange_strong(expected, desired) == false) 
+		{
 			expected = false;
+
+			// 문맥교환 최소화 하기위해 사용
+			// 이 쓰레드는 100ms동안 재스케줄링이 되지않는다.
+			// this_thread::sleep_for(std::chrono::milliseconds(100)); 
+			this_thread::sleep_for(100ms); // 위랑 똑같음 
+			// this_thread::yield(); // sleep_for(0ms)와 같음, 언제든지 다시 스케줄링이 될수있지만 반환
 		}
 
 
