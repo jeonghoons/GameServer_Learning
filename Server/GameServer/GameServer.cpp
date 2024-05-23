@@ -1,60 +1,87 @@
-#include "pch.h"
+﻿#include "pch.h"
 #include <iostream>
 #include "CorePch.h"
-#include <thread>
 #include <atomic>
 #include <mutex>
-#include "ConcurrentQueue.h"
-#include "ConcurrentStack.h"
+#include <windows.h>
+#include <future>
+#include "ThreadManager.h"
 
-// queue<int32> q;
-// stack<int32> s;
+#include "RefCounting.h"
 
-// LockQueue<int32> q;
-// LockStack<int32> s;
-
-LockQueue<int32> q;
-LockFreeStack<int32> s;
-
-void Push()
+class Wraight : public RefCountable
 {
-	while (true)
-	{
-		int32 value = rand() % 100;
-		// q.push(value);
-		s.Push(value);
+public:
+	int _hp = 150;
+	int _posX = 0;
+	int _posY = 0;
+};
 
-		this_thread::sleep_for(10ms);
+using WraightRef = TSharedPtr<Wraight>;
+
+class Missile : public RefCountable
+{
+public:
+	void SetTarget(WraightRef target)
+	{
+		_target = target;
+		// 중간에 개입 가능
+		//target->AddRef();
 	}
 
-}
-
-void Pop()
-{
-	while (true)
+	bool Update()
 	{
-		/*if (q.empty())
-			continue;
-		int32 data = q.front();
-		q.pop();
-		cout << data << endl; */
+		if (_target == nullptr)
+			return true;
 
-		int32 data = 0;
-		if (s.TryPop(data))
-			cout << data << endl;
+		int posX = _target->_posX;
+		int posY = _target->_posY;
 
+		// TODO : 쫓아간다
+
+		if (_target->_hp == 0)
+		{
+			//_target->ReleaseRef();
+			_target = nullptr;
+			return true;
+		}
+
+		return false;
 	}
-}
 
+	WraightRef _target = nullptr;
+};
+
+using MissileRef = TSharedPtr<Missile>;
 
 int main()
 {
-	thread t1(Push);
-	thread t2(Pop);
-	thread t3(Pop);
+	WraightRef wraight(new Wraight());
+	wraight->ReleaseRef();
+	MissileRef missile(new Missile());
+	missile->ReleaseRef();
 
+	missile->SetTarget(wraight);
 
-	t1.join();
-	t2.join();
-	t3.join();
+	// 레이스가 피격 당함
+	wraight->_hp = 0;
+	//delete wraight;
+	//wraight->ReleaseRef();
+	wraight = nullptr;
+
+	while (true)
+	{
+		if (missile)
+		{
+			if (missile->Update())
+			{
+				//missile->ReleaseRef();
+				missile = nullptr;
+			}
+		}
+	}
+
+	//missile->ReleaseRef();
+	missile = nullptr;
+	//delete missile;
 }
