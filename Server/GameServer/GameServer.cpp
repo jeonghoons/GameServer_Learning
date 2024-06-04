@@ -49,9 +49,20 @@ int main()
 
 
 	// vector<Knight, STLAllocator<Knight>> v(100);
-	Vector<Knight> v(100);
+	for (int32 i = 0; i < 5; ++i) {
+		GThreadManager->Launch([]()
+			{
+				while (true) {
+					Vector<Knight> v(10);
 
-	map<int32, Knight> m;
-	m[100] = Knight();
+					map<int32, Knight> m;
+					m[100] = Knight();
+
+					this_thread::sleep_for(10ms);
+				}
+			});
+	}
+	
+	GThreadManager->Join();
 	
 }
