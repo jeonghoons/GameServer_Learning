@@ -32,7 +32,7 @@ MemoryHeader* MemoryPool::Pop()
 	MemoryHeader* memory = static_cast<MemoryHeader*>(::InterlockedPopEntrySList(&_header));
 
 	if (memory == nullptr) {
-		memory = reinterpret_cast<MemoryHeader*>(::_aligned_malloc(_allocSize, SLIST_ALIGMENT));
+		memory = reinterpret_cast<MemoryHeader*>(::_aligned_malloc(_allocSize, SLIST_ALIGNMENT));
 	}
 	else {
 		ASSERT_CRASH(memory->allocSize == 0);

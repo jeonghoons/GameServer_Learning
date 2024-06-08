@@ -2,14 +2,14 @@
 
 enum
 {
-	SLIST_ALIGMENT = 16
+	SLIST_ALIGNMENT = 16
 };
 
 /*
 	MemoryHeader
 */
 
-DECLSPEC_ALIGN(SLIST_ALIGMENT)
+DECLSPEC_ALIGN(SLIST_ALIGNMENT)
 struct MemoryHeader : public SLIST_ENTRY
 {
 	// [Header][Data]
@@ -35,7 +35,7 @@ struct MemoryHeader : public SLIST_ENTRY
 	MemoryPool
 */
 
-DECLSPEC_ALIGN(SLIST_ALIGMENT)
+DECLSPEC_ALIGN(SLIST_ALIGNMENT)
 class MemoryPool
 {
 public:
