@@ -25,7 +25,7 @@ struct Session
 	SOCKET socket = INVALID_SOCKET;
 	char recvBuffer[BUFSIZE] = {};
 	int32 recvBytes = 0;
-	int32 sendBytes = 0;
+	WSAOVERLAPPED overlapped = {};
 };
 
 int main()
@@ -56,110 +56,91 @@ int main()
 
 	cout << "Accept" << endl;
 
-	// Select 모델 = (select 함수가 핵심이 되는)
-	// 소켓 함수 호출이 성공할 시점을 미리 알 수 있다!
-	// 문제 상황)
-	// 수신버퍼에 데이터가 없는데, read 한다거나!
-	// 송신버퍼가 꽉 찼는데, write 한다거나!
-	// - 블로킹 소켓 : 조건이 만족되지 않아서 블로킹되는 상황 예방
-	// - 논블로킹 소켓 : 조건이 만족되지 않아서 불필요하게 반복 체크하는 상황을 예방
+	// Overlapped IO (비동기 + 논블로킹)
+	// - Overlapped 함수를 건다 (WSARecv, WSASend)
+	// - Overlapped 함수가 성공했는지 확인 후
+	// -> 성공했으면 결과 얻어서 처리
+	// -> 실패했으면 사유를 확인
 
-	// socket set
-	// 1) 읽기[ 2 ] 쓰기[ ] 예외(OOB)[ ] 관찰 대상 등록
-	// OutOfBand는 send() 마지막 인자 MSG_OOB로 보내는 특별한 데이터
-	// 받는 쪽에서도 recv OOB 세팅을 해야 읽을 수 있음
-	// 2) select(readSet, writeSet, exceptSet); -> 관찰 시작
-	// 3) 적어도 하나의 소켓이 준비되면 리턴 -> 낙오자는 알아서 제거됨
-	// 4) 남은 소켓 체크해서 진행
+	// 1) 비동기 입출력 소켓
+	// 2) WSABUF 배열의 시작 주소 + 개수 // Scatter-Gather
+	// 3) 보내고/받은 바이트 수
+	// 4) 상세 옵션인데 0
+	// 5) WSAOVERLAPPED 구조체 주소값
+	// 6) 입출력이 완료되면 OS가 호출할 콜백 함수
+	// WSASend
+	// WSARecv
 
-	// fd_set set;
-	// FD_ZERO : 비운다
-	// ex) FD_ZERO(set);
-	// FD_SET : 소켓 s를 넣는다
-	// ex) FD_SET(s, &set);
-	// FD_CLR : 소켓 s를 제거
-	// ex) FD_CLR(s, &set);
-	// FD_ISSET : 소켓 s가 set에 들어있으면 0이 아닌 값을 리턴한다
+	// Overlapped 모델 (이벤트 기반)
+	// - 비동기 입출력 지원하는 소켓 생성 + 통지 받기 위한 이벤트 객체 생성
+	// - 비동기 입출력 함수 호출 (1에서 만든 이벤트 객체를 같이 넘겨줌)
+	// - 비동기 작업이 바로 완료되지 않으면, WSA_IO_PENDING 오류 코드
+	// 운영체제는 이벤트 객체를 signaled 상태로 만들어서 완료 상태 알려줌
+	// - WSAWaitForMultipleEvents 함수 호출해서 이벤트 객체의 signal 판별
+	// - WSAGetOverlappedResult 호출해서 비동기 입출력 결과 확인 및 데이터 처리
 
+	// 1) 비동기 소켓
+	// 2) 넘겨준 overlapped 구조체
+	// 3) 전송된 바이트 수
+	// 4) 비동기 입출력 작업이 끝날때까지 대기할지?
+	// false
+	// 5) 비동기 입출력 작업 관련 부가 정보. 거의 사용 안 함.
+	// WSAGetOverlappedResult
 
-	vector<Session> sessions;
-	sessions.reserve(100);
-
-	fd_set reads;
-	fd_set writes;
 
 	while (true)
 	{
-		// 소켓 셋 초기화
-		FD_ZERO(&reads);
-		FD_ZERO(&writes);
+		SOCKADDR_IN clientAddr;
+		int32 addrLen = sizeof(clientAddr);
 
-		// ListenSocket 등록
-		FD_SET(listenSocket, &reads);
-
-		// 소켓 등록
-		for (Session& s : sessions)
+		SOCKET clientSocket;
+		while (true)
 		{
-			if (s.recvBytes <= s.sendBytes)
-				FD_SET(s.socket, &reads);
-			else
-				FD_SET(s.socket, &writes);
-		}
-
-		// [옵션] 마지막 timeout 인자 설정 가능
-		int32 retVal = ::select(0, &reads, &writes, nullptr, nullptr);
-		if (retVal == SOCKET_ERROR)
-			break;
-
-		// Listener 소켓 체크
-		if (FD_ISSET(listenSocket, &reads))
-		{
-			SOCKADDR_IN clientAddr;
-			int32 addrLen = sizeof(clientAddr);
-			SOCKET clientSocket = ::accept(listenSocket, (SOCKADDR*)&clientAddr, &addrLen);
+			clientSocket = ::accept(listenSocket, (SOCKADDR*)&clientAddr, &addrLen);
 			if (clientSocket != INVALID_SOCKET)
-			{
-				cout << "Client Connected" << endl;
-				sessions.push_back(Session{ clientSocket });
-			}
+				break;
+
+			if (::WSAGetLastError() == WSAEWOULDBLOCK)
+				continue;
+
+			// 문제 있는 상황
+			return 0;
 		}
 
-		// 나머지 소켓 체크
-		for (Session& s : sessions)
+		Session session = Session{ clientSocket };
+		WSAEVENT wsaEvent = ::WSACreateEvent();
+		session.overlapped.hEvent = wsaEvent;
+
+		cout << "Client Connected !" << endl;
+
+		while (true)
 		{
-			// Read
-			if (FD_ISSET(s.socket, &reads))
-			{
-				int32 recvLen = ::recv(s.socket, s.recvBuffer, BUFSIZE, 0);
-				if (recvLen <= 0)
-				{
-					// TODO : sessions 제거
-					continue;
-				}
+			WSABUF wsaBuf;
+			wsaBuf.buf = session.recvBuffer;
+			wsaBuf.len = BUFSIZE;
 
-				s.recvBytes = recvLen;
+			DWORD recvLen = 0;
+			DWORD flags = 0;
+			if (::WSARecv(clientSocket, &wsaBuf, 1, &recvLen, &flags, &session.overlapped, nullptr) == SOCKET_ERROR)// 비동기 Recv
+			{
+				if (::WSAGetLastError() == WSA_IO_PENDING)
+				{
+					// Pending
+					::WSAWaitForMultipleEvents(1, &wsaEvent, TRUE, WSA_INFINITE, FALSE);
+					::WSAGetOverlappedResult(session.socket, &session.overlapped, &recvLen, FALSE, &flags);
+				}
+				else
+				{
+					// TODO : 문제 있는 상황
+					break;
+				}
 			}
 
-			// Write
-			if (FD_ISSET(s.socket, &writes))
-			{
-				// 블로킹 모드 -> 모든 데이터 다 보냄
-				// 논블로킹 모드 -> 일부만 보낼 수가 있음 (상대방 수신 버퍼 상황에 따라)
-				int32 sendLen = ::send(s.socket, &s.recvBuffer[s.sendBytes], s.recvBytes - s.sendBytes, 0);
-				if (sendLen == SOCKET_ERROR)
-				{
-					// TODO : sessions 제거
-					continue;
-				}
-
-				s.sendBytes += sendLen;
-				if (s.recvBytes == s.sendBytes)
-				{
-					s.recvBytes = 0;
-					s.sendBytes = 0;
-				}
-			}
+			cout << "Data Recv Len = " << recvLen << endl;
 		}
+
+		::closesocket(session.socket);
+		::WSACloseEvent(wsaEvent);
 	}
 
 
