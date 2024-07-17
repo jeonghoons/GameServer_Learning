@@ -6,3 +6,4 @@ extern class MemoryManager* GMemory;
 extern class DeadLockProfiler* GDeadLockProfiler;
 
 
+extern class DBConnectionPool* GDBConnectionPool;

@@ -4,10 +4,12 @@
 #include "Memory.h"
 #include "DeadLockProfiler.h"
 #include "SocketUtils.h"
+#include "DBConnectionPool.h"
 
 ThreadManager* GThreadManager = nullptr;
 DeadLockProfiler* GDeadLockProfiler = nullptr;
 MemoryManager* GMemory = nullptr;
+DBConnectionPool* GDBConnectionPool = nullptr;
 
 class CoreGlobal
 {
@@ -17,6 +19,7 @@ public:
 		GThreadManager = new ThreadManager();
 		GMemory = new MemoryManager();
 		GDeadLockProfiler = new DeadLockProfiler();
+		GDBConnectionPool = new DBConnectionPool();
 		SocketUtils::Init();
 	}
 	~CoreGlobal()
@@ -24,6 +27,7 @@ public:
 		delete GThreadManager;
 		delete GMemory;
 		delete GDeadLockProfiler;
+		delete GDBConnectionPool;
 		SocketUtils::Clear();
 	}
 
