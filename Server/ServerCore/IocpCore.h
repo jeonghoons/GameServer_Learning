@@ -23,12 +23,10 @@ public:
 
 	HANDLE GetHandle() { return _iocpHandle; }
 
-	bool Register(class IocpObject* iocpObject); // iocp핸들에 클라이언트 등록
+	bool Register(IocpObjectRef iocpObject); // iocp핸들에 클라이언트 등록
 	bool Dispatch(uint32 timeoutMs = INFINITE);
 
 public:
 	HANDLE _iocpHandle;
 };
-
-extern IocpCore GIocpCore;
 

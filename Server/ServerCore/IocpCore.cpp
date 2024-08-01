@@ -2,7 +2,6 @@
 #include "IocpCore.h"
 #include "IocpEvent.h"
 
-IocpCore GIocpCore;
 
 IocpCore::IocpCore()
 {
@@ -15,15 +14,15 @@ IocpCore::~IocpCore()
 	::CloseHandle(_iocpHandle);
 }
 
-bool IocpCore::Register(class IocpObject* iocpObject)
+bool IocpCore::Register(IocpObjectRef iocpObject)
 {
-	return ::CreateIoCompletionPort(iocpObject->GetHandle(), _iocpHandle, reinterpret_cast<ULONG_PTR>(iocpObject), 0);
+	return ::CreateIoCompletionPort(iocpObject->GetHandle(), _iocpHandle, 0, 0);
 }
 
 bool IocpCore::Dispatch(uint32 timeoutMs)
 {
 	DWORD numOfBytes = 0;
-	ULONG_PTR key;
+	ULONG_PTR key = 0;
 	IocpEvent* iocpEvent = nullptr;
 
 	if (::GetQueuedCompletionStatus(_iocpHandle, &numOfBytes, &key,
