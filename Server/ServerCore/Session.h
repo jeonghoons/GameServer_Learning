@@ -27,7 +27,7 @@ public:
 	virtual ~Session();
 
 public:
-	void			Send(BYTE* buffer, int32 len);
+	void			Send(SendBufferRef sendBuffer);
 	bool			Connect(); // 분산 서버를 위한 다른 서버와의 Connect
 	void			DisConnect(const WCHAR* cause);
 	shared_ptr<Service> GetService() { return _service.lock(); }
@@ -52,12 +52,12 @@ private:
 	bool			RegisterConnect();
 	bool			RegisterDisconnect();
 	void			RegisterRecv();
-	void			RegisterSend(SendEvent* sendEvent);
+	void			RegisterSend();
 
 	void			ProcessConnect();
 	void			ProcessDisconnect();
 	void			ProcessRecv(int32 numOfBytes);
-	void			ProcessSend(SendEvent* sendEvent, int32 numOfBytes);
+	void			ProcessSend(int32 numOfBytes);
 
 	void			HandleError(int32 errorCode);
 
@@ -78,13 +78,16 @@ private:
 private:
 	USE_LOCK;
 
-	RecvBuffer		_recvBuffer;
+	RecvBuffer				_recvBuffer;
 
+	Queue<SendBufferRef>		_sendQueue;
+	Atomic<bool>				_sendRegistered = false;
 
 private:
 	// IocpEvent 재사용
 	ConnectEvent		_connectEvent;
 	DisconnectEvent	_disconnectEvent;
 	RecvEvent		_recvEvent;
+	SendEvent		_sendEvent;
 };
 
