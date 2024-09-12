@@ -91,3 +91,25 @@ private:
 	SendEvent		_sendEvent;
 };
 
+/*
+	PacketSession
+*/
+
+struct PacketHeader
+{
+	uint16 size;
+	uint16 id;
+};
+
+class PacketSession : public Session
+{
+public:
+	PacketSession();
+	virtual ~PacketSession();
+
+	PacketSessionRef GetPacketSessionRef() { return static_pointer_cast<PacketSession>(shared_from_this()); }
+
+protected:
+	virtual int32 OnRecv(BYTE* buffer, int32 len) sealed; // sealed를 붙이면 오버라이드는 이 클래스 까지만
+	virtual int32 OnRecvPacket(BYTE* buffer, int32 len) abstract;
+};
