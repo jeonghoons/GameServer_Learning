@@ -3,6 +3,7 @@
 #include "Service.h"
 #include "Session.h"
 #include "BufferReader.h"
+#include "ClientPacketHandler.h"
 
 char sendData[] = "Hello World";
 
@@ -25,37 +26,11 @@ public:
 		Send(sendBuffer);*/
 	}
 
-	virtual int32 OnRecvPacket(BYTE* buffer, int32 len) override
+	virtual void OnRecvPacket(BYTE* buffer, int32 len) override
 	{
-		BufferReader br(buffer, len);
+		ClientPacketHandler::HandlerPacket(buffer, len);
 
-
-		PacketHeader header;
-		br >> header;
-		// cout << "Packet ID : " << header.id << " , Size : " << header.size << endl;
 		
-		uint64 id;
-		uint32 hp;
-		uint16 attack;
-		br >> id >> hp >> attack;
-
-		cout << "ID: " << id << " HP: " << hp << " ATT: " << attack << endl;
-
-		char recvBuffer[4096];
-		br.Read(recvBuffer, header.size - sizeof(PacketHeader) - 8 - 4 - 2);
-		cout << recvBuffer << endl;
-		
-		// cout << "OnRecv Len = " << len << endl;
-
-		/*this_thread::sleep_for(1s);
-
-		SendBufferRef sendBuffer = GSendBufferManager->Open(4096);
-		::memcpy(sendBuffer->Buffer(), sendData, sizeof(sendData));
-		sendBuffer->Close(sizeof(sendData));
-
-		Send(sendBuffer);*/
-
-		return len;
 	}
 
 	virtual void OnSend(int32 len) override
@@ -77,7 +52,7 @@ int main()
 		NetAddress(L"127.0.0.1", 7777),
 		MakeShared<IocpCore>(),
 		MakeShared<ServerSession>,
-		500);
+		1);
 
 	ASSERT_CRASH(service->Start());
 

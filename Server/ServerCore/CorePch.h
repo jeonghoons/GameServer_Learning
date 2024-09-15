@@ -25,3 +25,4 @@ using namespace std;
 
 #include "Memory.h"
 #include "SendBuffer.h"
+#include "Session.h"

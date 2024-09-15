@@ -111,5 +111,5 @@ public:
 
 protected:
 	virtual int32 OnRecv(BYTE* buffer, int32 len) sealed; // sealed를 붙이면 오버라이드는 이 클래스 까지만
-	virtual int32 OnRecvPacket(BYTE* buffer, int32 len) abstract;
+	virtual void OnRecvPacket(BYTE* buffer, int32 len) abstract;
 };
