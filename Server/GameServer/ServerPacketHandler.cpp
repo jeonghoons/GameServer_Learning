@@ -18,31 +18,4 @@ void ServerPacketHandler::HandlerPacket(BYTE* buffer, int32 len)
 	}
 }
 
-SendBufferRef ServerPacketHandler::Make_S_Test(uint64 id, uint32 hp, uint16 attack, vector<BuffData> buffs)
-{
-	SendBufferRef sendBuffer = GSendBufferManager->Open(4096);
 
-	BufferWriter bw(sendBuffer->Buffer(), sendBuffer->AllocSize());
-
-	PacketHeader* header = bw.Reserve<PacketHeader>();
-
-	bw << id << hp << attack; // ex) id, 체력, 공격력
-
-
-	// 가변 데이터
-	bw << (uint16)buffs.size();
-
-	for (BuffData& buff : buffs)
-	{
-		bw << buff.buffId << buff.remainTime;
-	}
-
-
-	header->size = bw.WriteSize();
-	header->id = S_TEST;
-
-
-	sendBuffer->Close(bw.WriteSize());
-
-	return sendBuffer;
-}
