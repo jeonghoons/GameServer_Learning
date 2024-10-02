@@ -3,7 +3,7 @@
 #include "Service.h"
 #include "Session.h"
 #include "BufferReader.h"
-#include "ClientPacketHandler.h"
+#include "ServerPacketHandler.h"
 
 char sendData[] = "Hello World";
 
@@ -28,8 +28,10 @@ public:
 
 	virtual void OnRecvPacket(BYTE* buffer, int32 len) override
 	{
-		ClientPacketHandler::HandlerPacket(buffer, len);
+		PacketSessionRef session = GetPacketSessionRef();
+		PacketHeader* header = reinterpret_cast<PacketHeader*>(buffer);
 
+		ServerPacketHandler::HandlerPacket(session, buffer, len);
 		
 	}
 
@@ -46,6 +48,7 @@ public:
 
 int main()
 {
+	ServerPacketHandler::Init();
 	this_thread::sleep_for(1s);
 
 	ClientServiceRef service = MakeShared<ClientService>(
