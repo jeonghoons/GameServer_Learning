@@ -27,6 +27,14 @@ public:
 	virtual void	CloseService();
 	void			SetSessionFactory(SessionFactory func) { _sessionFactory = func; }
 
+	void			Broadcast(SendBufferRef sendBuffer)
+	{
+		WRITE_LOCK;
+		for (const auto& session : _sessions)
+		{
+			session->Send(sendBuffer);
+		}
+	}
 	SessionRef	CreateSession();
 	void			AddSession(SessionRef session);
 	void			ReleaseSession(SessionRef session);

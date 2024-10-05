@@ -74,7 +74,7 @@ bool SocketUtils::SetUpdateAcceptSocket(SOCKET socket, SOCKET listenSocket)
 
 bool SocketUtils::Bind(SOCKET socket, NetAddress netAddr)
 {
-	return SOCKET_ERROR != bind(socket, reinterpret_cast<const SOCKADDR*>(&netAddr.GetSockAddr()), sizeof(SOCKADDR_IN));
+	return SOCKET_ERROR != ::bind(socket, reinterpret_cast<const SOCKADDR*>(&netAddr.GetSockAddr()), sizeof(SOCKADDR_IN));
 }
 
 bool SocketUtils::BindAnyAddress(SOCKET socket, uint16 port)
@@ -84,12 +84,12 @@ bool SocketUtils::BindAnyAddress(SOCKET socket, uint16 port)
 	myAddress.sin_addr.s_addr = ::htonl(INADDR_ANY);
 	myAddress.sin_port = ::htons(port);
 	 
-	return SOCKET_ERROR != bind(socket, reinterpret_cast<SOCKADDR*>(&myAddress), sizeof(myAddress));
+	return SOCKET_ERROR != ::bind(socket, reinterpret_cast<SOCKADDR*>(&myAddress), sizeof(myAddress));
 }
 
 bool SocketUtils::Listen(SOCKET socket, int32 backlog)
 {
-	return SOCKET_ERROR != listen(socket, backlog);
+	return SOCKET_ERROR != ::listen(socket, backlog);
 }
 
 void SocketUtils::Close(SOCKET& socket)

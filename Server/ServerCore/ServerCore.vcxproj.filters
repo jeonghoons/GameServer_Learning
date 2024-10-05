@@ -76,6 +76,18 @@
     <ClCompile Include="RefCounting.cpp">
       <Filter>Memory</Filter>
     </ClCompile>
+    <ClCompile Include="Job.cpp">
+      <Filter>Job</Filter>
+    </ClCompile>
+    <ClCompile Include="JobQueue.cpp">
+      <Filter>Job</Filter>
+    </ClCompile>
+    <ClCompile Include="LockQueue.cpp">
+      <Filter>Utils</Filter>
+    </ClCompile>
+    <ClCompile Include="GlobalQueue.cpp">
+      <Filter>Job</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="DBBind.h">
@@ -168,6 +180,18 @@
     <ClInclude Include="TypeCast.h">
       <Filter>Memory</Filter>
     </ClInclude>
+    <ClInclude Include="Job.h">
+      <Filter>Job</Filter>
+    </ClInclude>
+    <ClInclude Include="JobQueue.h">
+      <Filter>Job</Filter>
+    </ClInclude>
+    <ClInclude Include="LockQueue.h">
+      <Filter>Utils</Filter>
+    </ClInclude>
+    <ClInclude Include="GlobalQueue.h">
+      <Filter>Job</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <Filter Include="DB">
@@ -187,6 +211,9 @@
     </Filter>
     <Filter Include="Thread">
       <UniqueIdentifier>{a57f575d-26ae-4ccc-972c-4720999f32c5}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Job">
+      <UniqueIdentifier>{1a953ed6-849f-480b-91e8-5cc649a7ea8b}</UniqueIdentifier>
     </Filter>
   </ItemGroup>
 </Project>

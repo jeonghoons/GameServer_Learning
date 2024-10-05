@@ -10,30 +10,34 @@ bool Handle_INVALID(PacketSessionRef& session, BYTE* buffer, int32 len)
 	return true;
 }
 
-bool Handle_S_TEST(PacketSessionRef& session, Protocol::S_TEST& pkt)
-{
-	cout << pkt.id() << " " << pkt.hp() << " " << pkt.attack() << endl;
-
-	cout << "BUFSIZE : " << pkt.buffs_size() << endl;
-
-	for (auto& buf : pkt.buffs())
-	{
-		cout << "BUF INFO : " << buf.buffid() << ", " << buf.remaintime() << endl;
-		cout << "VICTIMS : " << buf.victims_size() << endl;
-		for (auto& vic : buf.victims())
-		{
-			cout << vic << " ";
-		}
-		cout << endl;
-	}
-
-	return true;
-}
-
 bool Handle_S_LOGIN(PacketSessionRef& session, Protocol::S_LOGIN& pkt)
 {
+	if (pkt.success() == false)
+		return false;
+
+	Protocol::C_ENTER_GAME enterGamepkt;
+	enterGamepkt.set_playerindex(0);
+	auto sendBuffer = ServerPacketHandler::MakeSendBuffer(enterGamepkt);
+	session->Send(sendBuffer);
+
 	return true;
 }
+
+bool Handle_S_ENTER_GAME(PacketSessionRef& session, Protocol::S_ENTER_GAME& pkt)
+{
+
+
+	return true;
+}
+
+bool Handle_S_CHAT(PacketSessionRef& session, Protocol::S_CHAT& pkt)
+{
+	std::cout << pkt.msg() << endl;
+
+	return true;
+}
+
+
 
 
 //#pragma pack(1)

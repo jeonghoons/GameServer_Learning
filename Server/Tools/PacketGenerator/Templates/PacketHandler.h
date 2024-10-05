@@ -39,7 +39,7 @@ public:
 		return GPacketHandler[header->id](session, buffer, len);
 	}
 
-{%- for pkt in parser.recv_pkt %}
+{%- for pkt in parser.send_pkt %}
 	static SendBufferRef MakeSendBuffer(Protocol::{{pkt.name}}& pkt) { return MakeSendBuffer(pkt, PKT_{{pkt.name}}); }
 {%- endfor %}
 

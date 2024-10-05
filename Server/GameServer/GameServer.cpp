@@ -9,6 +9,20 @@
 #include <tchar.h>
 #include "Protocol.pb.h"
 
+enum {WORKER_TICK = 64};
+
+void DoWorkerJob(ServerServiceRef& service)
+{
+	while (true)
+	{
+		LEndTickCount = ::GetTickCount64() + WORKER_TICK;
+
+		service->GetIocpCore()->Dispatch(10);
+
+		ThreadManager::DoGlobalQueueWork();
+	}
+}
+
 class GameSession2 : public Session
 {
 public:
@@ -37,6 +51,8 @@ public:
 
 int main()
 {
+
+
 	ClientPacketHandler::Init();
 
 	ServerServiceRef service = MakeShared<ServerService>(
@@ -47,7 +63,7 @@ int main()
 
 	ASSERT_CRASH(service->Start());
 
-	for (int32 i = 0; i < 5; ++i)
+	/*for (int32 i = 0; i < 5; ++i)
 	{
 		GThreadManager->Launch([=]()
 			{
@@ -56,42 +72,17 @@ int main()
 					service->GetIocpCore()->Dispatch();
 				}
 			});
-	}
+	}*/
 
-
-	char sendData1[1000] = "가"; // CP-949 = KS-X-1001(한글2바이트) + KS-X-1003(로마1바이트)
-	// char sendData2[1000] = u8"가"; // UTF8 = Unicode (한글 3바이트 + 로마 1바이트)
-	WCHAR sendData3[1000] = L"가"; // UTF16 = Unicode (한글/로마 2바이트)
-	TCHAR sendData4[1000] = _T("가");
-
-	char sendData[1000] = "Hello World";
-
-
-	while (true)
+	for (int32 i = 0; i < 5; i++)
 	{
-		Protocol::S_TEST pkt;
-		pkt.set_id(1000);
-		pkt.set_hp(100);
-		pkt.set_attack(10);
-
+		GThreadManager->Launch([&service]()
 		{
-			Protocol::BuffData* data = pkt.add_buffs();
-			data->set_buffid(100);
-			data->set_remaintime(1.2f);
-			data->add_victims(4000);
-		}
-
-		{
-			Protocol::BuffData* data = pkt.add_buffs();
-			data->set_buffid(200);
-			data->set_remaintime(2.5f);
-			data->add_victims(1000);
-			data->add_victims(2000);
-		}
-		
-
-		this_thread::sleep_for(250ms);
+			DoWorkerJob(service);
+		});
 	}
+
+	
 
 	GThreadManager->Join();
 

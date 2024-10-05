@@ -23,7 +23,7 @@ def main():
     f.write(output)
     f.close()
 
-    # print(output)
+    print(output)
 
     return
 
