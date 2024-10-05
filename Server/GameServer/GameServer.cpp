@@ -6,6 +6,7 @@
 #include "GameSessionManager.h"
 #include "BufferWriter.h"
 #include "ClientPacketHandler.h"
+#include "Room.h"
 #include <tchar.h>
 #include "Protocol.pb.h"
 
@@ -18,6 +19,8 @@ void DoWorkerJob(ServerServiceRef& service)
 		LEndTickCount = ::GetTickCount64() + WORKER_TICK;
 
 		service->GetIocpCore()->Dispatch(10);
+
+		ThreadManager::DistributeReservedJobs();
 
 		ThreadManager::DoGlobalQueueWork();
 	}
@@ -51,7 +54,9 @@ public:
 
 int main()
 {
-
+	GRoom->DoTimer(2000, [] {cout << "Hello 2000" << endl; });
+	GRoom->DoTimer(3000, [] {cout << "Hello 3000" << endl; });
+	GRoom->DoTimer(4000, [] {cout << "Hello 4000" << endl; });
 
 	ClientPacketHandler::Init();
 
