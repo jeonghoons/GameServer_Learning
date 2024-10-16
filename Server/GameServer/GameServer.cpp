@@ -54,9 +54,9 @@ public:
 
 int main()
 {
-	GRoom->DoTimer(2000, [] {cout << "Hello 2000" << endl; });
+	/*GRoom->DoTimer(2000, [] {cout << "Hello 2000" << endl; });
 	GRoom->DoTimer(3000, [] {cout << "Hello 3000" << endl; });
-	GRoom->DoTimer(4000, [] {cout << "Hello 4000" << endl; });
+	GRoom->DoTimer(4000, [] {cout << "Hello 4000" << endl; });*/
 
 	ClientPacketHandler::Init();
 
@@ -86,6 +86,7 @@ int main()
 			DoWorkerJob(service);
 		});
 	}
+
 
 	
 
