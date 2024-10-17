@@ -2151,12 +2151,6 @@
     <Filter Include="Source\S1">
       <UniqueIdentifier>{4CAEE792-1802-3053-AB97-E84B9516D67A}</UniqueIdentifier>
     </Filter>
-    <ClCompile Include="..\..\Source\S1\MyActor.cpp">
-      <Filter>Source\S1</Filter>
-    </ClCompile>
-    <ClInclude Include="..\..\Source\S1\MyActor.h">
-      <Filter>Source\S1</Filter>
-    </ClInclude>
     <None Include="..\..\Source\S1\S1.Build.cs">
       <Filter>Source\S1</Filter>
     </None>
@@ -2177,6 +2171,21 @@
     </ClCompile>
     <ClInclude Include="..\..\Source\S1\ServerPacketHandler.h">
       <Filter>Source\S1</Filter>
+    </ClInclude>
+    <Filter Include="Source\S1\Game">
+      <UniqueIdentifier>{B11DE034-9A0E-3AB4-9AF4-B5FE10AF531D}</UniqueIdentifier>
+    </Filter>
+    <ClCompile Include="..\..\Source\S1\Game\S1MyPlayer.cpp">
+      <Filter>Source\S1\Game</Filter>
+    </ClCompile>
+    <ClInclude Include="..\..\Source\S1\Game\S1MyPlayer.h">
+      <Filter>Source\S1\Game</Filter>
+    </ClInclude>
+    <ClCompile Include="..\..\Source\S1\Game\S1Player.cpp">
+      <Filter>Source\S1\Game</Filter>
+    </ClCompile>
+    <ClInclude Include="..\..\Source\S1\Game\S1Player.h">
+      <Filter>Source\S1\Game</Filter>
     </ClInclude>
     <Filter Include="Source\S1\Network">
       <UniqueIdentifier>{7122B395-06A5-3824-8672-244187FC4E19}</UniqueIdentifier>

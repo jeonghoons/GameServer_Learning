@@ -10,7 +10,9 @@ PRAGMA_DISABLE_DEPRECATION_WARNINGS
 void EmptyLinkFunctionForGeneratedCodeS1GameInstance() {}
 
 // Begin Cross Module References
+COREUOBJECT_API UClass* Z_Construct_UClass_UClass();
 ENGINE_API UClass* Z_Construct_UClass_UGameInstance();
+S1_API UClass* Z_Construct_UClass_AS1Player_NoRegister();
 S1_API UClass* Z_Construct_UClass_US1GameInstance();
 S1_API UClass* Z_Construct_UClass_US1GameInstance_NoRegister();
 UPackage* Z_Construct_UPackage__Script_S1();
@@ -129,7 +131,13 @@ struct Z_Construct_UClass_US1GameInstance_Statics
 		{ "IncludePath", "S1GameInstance.h" },
 		{ "ModuleRelativePath", "S1GameInstance.h" },
 	};
+	static constexpr UECodeGen_Private::FMetaDataPairParam NewProp_OtherPlayerClass_MetaData[] = {
+		{ "Category", "S1GameInstance" },
+		{ "ModuleRelativePath", "S1GameInstance.h" },
+	};
 #endif // WITH_METADATA
+	static const UECodeGen_Private::FClassPropertyParams NewProp_OtherPlayerClass;
+	static const UECodeGen_Private::FPropertyParamsBase* const PropPointers[];
 	static UObject* (*const DependentSingletons[])();
 	static constexpr FClassFunctionLinkInfo FuncInfo[] = {
 		{ &Z_Construct_UFunction_US1GameInstance_ConnetToGameServer, "ConnetToGameServer" }, // 2901908294
@@ -142,6 +150,11 @@ struct Z_Construct_UClass_US1GameInstance_Statics
 	};
 	static const UECodeGen_Private::FClassParams ClassParams;
 };
+const UECodeGen_Private::FClassPropertyParams Z_Construct_UClass_US1GameInstance_Statics::NewProp_OtherPlayerClass = { "OtherPlayerClass", nullptr, (EPropertyFlags)0x0014000000000001, UECodeGen_Private::EPropertyGenFlags::Class, RF_Public|RF_Transient|RF_MarkAsNative, nullptr, nullptr, 1, STRUCT_OFFSET(US1GameInstance, OtherPlayerClass), Z_Construct_UClass_UClass, Z_Construct_UClass_AS1Player_NoRegister, METADATA_PARAMS(UE_ARRAY_COUNT(NewProp_OtherPlayerClass_MetaData), NewProp_OtherPlayerClass_MetaData) };
+const UECodeGen_Private::FPropertyParamsBase* const Z_Construct_UClass_US1GameInstance_Statics::PropPointers[] = {
+	(const UECodeGen_Private::FPropertyParamsBase*)&Z_Construct_UClass_US1GameInstance_Statics::NewProp_OtherPlayerClass,
+};
+static_assert(UE_ARRAY_COUNT(Z_Construct_UClass_US1GameInstance_Statics::PropPointers) < 2048);
 UObject* (*const Z_Construct_UClass_US1GameInstance_Statics::DependentSingletons[])() = {
 	(UObject* (*)())Z_Construct_UClass_UGameInstance,
 	(UObject* (*)())Z_Construct_UPackage__Script_S1,
@@ -153,11 +166,11 @@ const UECodeGen_Private::FClassParams Z_Construct_UClass_US1GameInstance_Statics
 	&StaticCppClassTypeInfo,
 	DependentSingletons,
 	FuncInfo,
-	nullptr,
+	Z_Construct_UClass_US1GameInstance_Statics::PropPointers,
 	nullptr,
 	UE_ARRAY_COUNT(DependentSingletons),
 	UE_ARRAY_COUNT(FuncInfo),
-	0,
+	UE_ARRAY_COUNT(Z_Construct_UClass_US1GameInstance_Statics::PropPointers),
 	0,
 	0x009000A8u,
 	METADATA_PARAMS(UE_ARRAY_COUNT(Z_Construct_UClass_US1GameInstance_Statics::Class_MetaDataParams), Z_Construct_UClass_US1GameInstance_Statics::Class_MetaDataParams)
@@ -183,10 +196,10 @@ US1GameInstance::~US1GameInstance() {}
 struct Z_CompiledInDeferFile_FID_GameServer_Study_S1_Source_S1_S1GameInstance_h_Statics
 {
 	static constexpr FClassRegisterCompiledInInfo ClassInfo[] = {
-		{ Z_Construct_UClass_US1GameInstance, US1GameInstance::StaticClass, TEXT("US1GameInstance"), &Z_Registration_Info_UClass_US1GameInstance, CONSTRUCT_RELOAD_VERSION_INFO(FClassReloadVersionInfo, sizeof(US1GameInstance), 3383354343U) },
+		{ Z_Construct_UClass_US1GameInstance, US1GameInstance::StaticClass, TEXT("US1GameInstance"), &Z_Registration_Info_UClass_US1GameInstance, CONSTRUCT_RELOAD_VERSION_INFO(FClassReloadVersionInfo, sizeof(US1GameInstance), 603324485U) },
 	};
 };
-static FRegisterCompiledInInfo Z_CompiledInDeferFile_FID_GameServer_Study_S1_Source_S1_S1GameInstance_h_3673080148(TEXT("/Script/S1"),
+static FRegisterCompiledInInfo Z_CompiledInDeferFile_FID_GameServer_Study_S1_Source_S1_S1GameInstance_h_2295366318(TEXT("/Script/S1"),
 	Z_CompiledInDeferFile_FID_GameServer_Study_S1_Source_S1_S1GameInstance_h_Statics::ClassInfo, UE_ARRAY_COUNT(Z_CompiledInDeferFile_FID_GameServer_Study_S1_Source_S1_S1GameInstance_h_Statics::ClassInfo),
 	nullptr, 0,
 	nullptr, 0);

@@ -7,6 +7,8 @@
 #include "S1.h"
 #include "S1GameInstance.generated.h"
 
+class AS1Player;
+
 /**
  * 
  */
@@ -27,10 +29,29 @@ public:
 
 	void SendPacket(SendBufferRef SendBuffer);
 
+
+public:
+	void HandleSpawn(const Protocol::PlayerInfo& PlayerInfo, bool IsMine);
+	void HandleSpawn(const Protocol::S_ENTER_GAME& EnterGamePkt);
+	void HandleSpawn(const Protocol::S_SPAWN& SpawnPkt);
+
+
+	void HandleDespawn(uint64 ObjectId);
+	void HandleDespawn(const Protocol::S_DESPAWN& DespawnPkt);
+
+	void HandleMove(const Protocol::S_MOVE& MovePkt);
+
 public:
 	class FSocket* Socket;
 	FString IpAddress = TEXT("127.0.0.1");
 	int16 Port = 7777;
 
 	TSharedPtr<class PacketSession> GameServerSession;
+	
+public:
+	UPROPERTY(EditAnywhere)
+	TSubclassOf<AS1Player> OtherPlayerClass;
+
+	AS1Player* MyPlayer;
+	TMap<uint64, AS1Player*> Players;
 };

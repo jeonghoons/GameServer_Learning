@@ -26,11 +26,12 @@ void Session::Send(SendBufferRef sendBuffer)
 		WRITE_LOCK;
 		_sendQueue.push(sendBuffer);
 
-		if (_sendRegistered.exchange(true) == false)
+		if (_sendRegistered.exchange(true) == false) 
 			registerSend = true;
 
 	}
 	
+	// 처음으로 들어온 쓰레드만 전송
 	if(registerSend)
 		RegisterSend();
 }

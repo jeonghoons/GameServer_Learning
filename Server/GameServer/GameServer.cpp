@@ -26,32 +26,6 @@ void DoWorkerJob(ServerServiceRef& service)
 	}
 }
 
-class GameSession2 : public Session
-{
-public:
-	~GameSession2()
-	{
-		cout << "~GameSession" << endl;
-	}
-	virtual int32 OnRecv(BYTE* buffer, int32 len) override
-	{
-		cout << "OnRecv Len = " << len << endl;
-
-		SendBufferRef sendBuffer = GSendBufferManager->Open(4096);
-		::memcpy(sendBuffer->Buffer(), buffer, len);
-		sendBuffer->Close(len);
-
-		Send(sendBuffer);
-
-		return len;
-	}
-
-	virtual void OnSend(int32 len) override
-	{
-		cout << "OnSend Len = " << len << endl;
-	}
-};
-
 int main()
 {
 	/*GRoom->DoTimer(2000, [] {cout << "Hello 2000" << endl; });
