@@ -195,7 +195,9 @@
     <ClInclude Include="GlobalQueue.h">
       <Filter>Job</Filter>
     </ClInclude>
-    <ClInclude Include="JobTimer.h" />
+    <ClInclude Include="JobTimer.h">
+      <Filter>Job</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <Filter Include="DB">

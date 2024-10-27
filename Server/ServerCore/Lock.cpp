@@ -9,8 +9,6 @@ void Lock::WriteLock(const char* name)
 	GDeadLockProfiler->PushLock(name);
 #endif // _DEBUG
 
-
-
 	// 동일한 쓰레드가 소유하고 있다면 무조건 성공.
 	const uint32 lockThreadid = (_lockFlag.load() & WRITE_THREAD_MASK) >> 16;
 	if (Lthreadid == lockThreadid) {

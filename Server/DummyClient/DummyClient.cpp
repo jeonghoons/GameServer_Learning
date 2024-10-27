@@ -1,90 +1,327 @@
 ﻿#include "pch.h"
-#include "ThreadManager.h"
-#include "Service.h"
-#include "Session.h"
+
+//#include "ThreadManager.h"
+//#include "Service.h"
+//#include "Session.h"
 #include "BufferReader.h"
 #include "ServerPacketHandler.h"
 
-char sendData[] = "Hello World";
+#pragma comment (lib, "opengl32.lib")
+#pragma comment (lib, "winmm.lib")
 
-class ServerSession : public PacketSession
-{
+sf::TcpSocket s_socket;
+
+int g_left_x;
+int g_top_y;
+int g_myid;
+
+sf::RenderWindow* g_window;
+sf::Font g_font;
+
+class OBJECT {
+private:
+	bool m_showing;
+	sf::Sprite m_sprite;
+
+	sf::Text m_name;
+	sf::Text m_hp;
+	sf::Text m_chat;
+	chrono::system_clock::time_point m_mess_end_time;
 public:
-	~ServerSession()
+	int id;
+	int hp;
+	int max_hp;
+	int level;
+	int m_x, m_y;
+	char name[NAME_SIZE];
+	OBJECT(sf::Texture& t, int x, int y, int x2, int y2) {
+		m_showing = false;
+		m_sprite.setTexture(t);
+		m_sprite.setTextureRect(sf::IntRect(x, y, x2, y2));
+		set_name("NONAME");
+		m_mess_end_time = chrono::system_clock::now();
+	}
+	OBJECT() {
+		m_showing = false;
+	}
+	void show()
 	{
-		cout << "~ServerSession" << endl;
+		m_showing = true;
+	}
+	void hide()
+	{
+		m_showing = false;
 	}
 
-	virtual void OnConnected() override
-	{
-		Protocol::C_LOGIN pkt;
-		auto sendBuffer = ServerPacketHandler::MakeSendBuffer(pkt);
-		Send(sendBuffer);
-
-
-		// cout << "Connected To Server" << endl;
-
-		/*SendBufferRef sendBuffer = GSendBufferManager->Open(4096);
-		::memcpy(sendBuffer->Buffer(), sendData, sizeof(sendData));
-		sendBuffer->Close(sizeof(sendData));
-
-		Send(sendBuffer);*/
+	void a_move(int x, int y) {
+		m_sprite.setPosition((float)x, (float)y);
 	}
 
-	virtual void OnRecvPacket(BYTE* buffer, int32 len) override
-	{
-		PacketSessionRef session = GetPacketSessionRef();
-		PacketHeader* header = reinterpret_cast<PacketHeader*>(buffer);
-
-		ServerPacketHandler::HandlerPacket(session, buffer, len);
-		
+	void a_draw() {
+		g_window->draw(m_sprite);
 	}
 
-	virtual void OnSend(int32 len) override
-	{
-		// cout << "OnSend Len = " << len << endl;
+	void move(int x, int y) {
+		m_x = x;
+		m_y = y;
+	}
+	void draw() {
+		if (false == m_showing) return;
+		float rx = (m_x - g_left_x) * TILE_WIDTH + 1;
+		float ry = (m_y - g_top_y) * TILE_WIDTH + 1;
+		m_sprite.setPosition(rx, ry);
+		g_window->draw(m_sprite);
+		auto size = m_name.getGlobalBounds();
+
+		m_hp.setPosition(rx + 32 - size.width / 2, ry - 30);
+		g_window->draw(m_hp);
+
+		if (m_mess_end_time < chrono::system_clock::now()) {
+			m_name.setPosition(rx + 32 - size.width / 2, ry - 10);
+			g_window->draw(m_name);
+		}
+		else {
+			m_chat.setPosition(rx + 32 - size.width / 2, ry - 10);
+			g_window->draw(m_chat);
+		}
+
+	}
+	void set_name(const char str[]) {
+
+		string slevel = "LV";
+		slevel += static_cast<char>(level + '0');
+		slevel += str;
+
+		m_name.setFont(g_font);
+		m_name.setFillColor(sf::Color(255, 255, 0));
+		m_name.setStyle(sf::Text::Bold);
 	}
 
-	virtual void OnDisConnected() override
-	{
-		// cout << "DisConnected" << endl;
+	void set_hp(int _hp) {
+		hp = _hp;
+		string hpBar = to_string(hp);
+		hpBar += " / ";
+		hpBar += to_string(max_hp);
+
+		m_hp.setFont(g_font);
+		m_hp.setString(hpBar);
+		m_hp.setFillColor(sf::Color(255, 0, 0));
+		m_name.setStyle(sf::Text::Bold);
+	}
+
+	void set_chat(const char str[]) {
+		m_chat.setFont(g_font);
+		m_chat.setString(str);
+		m_chat.setFillColor(sf::Color(0, 255, 0));
+		m_chat.setStyle(sf::Text::Bold);
+		m_mess_end_time = chrono::system_clock::now() + chrono::seconds(3);
 	}
 };
 
+OBJECT avatar;
+unordered_map <int, OBJECT> players;
+
+OBJECT white_tile;
+OBJECT black_tile;
+
+sf::Texture* board;
+sf::Texture* pieces;
+
+void client_initialize()
+{
+	board = new sf::Texture;
+	pieces = new sf::Texture;
+	board->loadFromFile("chessmap.bmp");
+	pieces->loadFromFile("chess2.png");
+	if (false == g_font.loadFromFile("cour.ttf")) {
+		cout << "Font Loading Error!\n";
+		exit(-1);
+	}
+	white_tile = OBJECT{ *board, 69, 5, TILE_WIDTH, TILE_WIDTH };
+	black_tile = OBJECT{ *board, 5, 5, TILE_WIDTH, TILE_WIDTH };
+	avatar = OBJECT{ *pieces, 128, 0, 44, 44 };
+	avatar.move(4, 4);
+}
+
+void client_finish()
+{
+	players.clear();
+	delete board;
+	delete pieces;
+}
+
+void ProcessPacket(char* ptr)
+{
+	switch (ptr[1])
+	{
+
+	default:
+		printf("Unknown PACKET type [%d]\n", ptr[2]);
+	}
+}
+
+void process_data(char* net_buf, size_t io_byte)
+{
+	char* ptr = net_buf;
+	static size_t in_packet_size = 0;
+	static size_t saved_packet_size = 0;
+	static char packet_buffer[BUF_SIZE];
+
+	while (0 != io_byte) {
+		if (0 == in_packet_size) in_packet_size = ptr[0];
+		if (io_byte + saved_packet_size >= in_packet_size) {
+			memcpy(packet_buffer + saved_packet_size, ptr, in_packet_size - saved_packet_size);
+			ProcessPacket(packet_buffer);
+			ptr += in_packet_size - saved_packet_size;
+			io_byte -= in_packet_size - saved_packet_size;
+			in_packet_size = 0;
+			saved_packet_size = 0;
+		}
+		else {
+			memcpy(packet_buffer + saved_packet_size, ptr, io_byte);
+			saved_packet_size += io_byte;
+			io_byte = 0;
+		}
+	}
+
+}
+
+void client_main()
+{
+	char net_buf[BUF_SIZE];
+	size_t	received;
+
+	auto recv_result = s_socket.receive(net_buf, BUF_SIZE, received);
+	if (recv_result == sf::Socket::Error)
+	{
+		wcout << L"Recv 에러!";
+		exit(-1);
+	}
+	if (recv_result == sf::Socket::Disconnected) {
+		wcout << L"Disconnected\n";
+		exit(-1);
+	}
+	if (recv_result != sf::Socket::NotReady)
+		if (received > 0) process_data(net_buf, received);
+
+	for (int i = 0; i < SCREEN_WIDTH; ++i)
+		for (int j = 0; j < SCREEN_HEIGHT; ++j)
+		{
+			int tile_x = i + g_left_x;
+			int tile_y = j + g_top_y;
+			if ((tile_x < 0) || (tile_y < 0)) continue;
+			if (0 == (tile_x / 3 + tile_y / 3) % 2) {
+				white_tile.a_move(TILE_WIDTH * i, TILE_WIDTH * j);
+				white_tile.a_draw();
+			}
+			else
+			{
+				black_tile.a_move(TILE_WIDTH * i, TILE_WIDTH * j);
+				black_tile.a_draw();
+			}
+		}
+	avatar.draw();
+	for (auto& pl : players) pl.second.draw();
+	sf::Text text;
+	text.setFont(g_font);
+	char buf[100];
+	sprintf_s(buf, "(%d, %d)", avatar.m_x, avatar.m_y);
+	sprintf_s(buf, "(%d, %d) - LV : %d   HP[%d/%d] ", avatar.m_x, avatar.m_y, avatar.level, avatar.hp, avatar.max_hp);
+	text.setString(buf);
+	g_window->draw(text);
+}
+
+void send_packet(void* packet)
+{
+	unsigned char* p = reinterpret_cast<unsigned char*>(packet);
+	size_t sent = 0;
+	s_socket.send(packet, p[0], sent);
+}
+
 int main()
 {
-	ServerPacketHandler::Init();
-	this_thread::sleep_for(1s);
+	wcout.imbue(locale("korean"));
+	sf::Socket::Status status = s_socket.connect("127.0.0.1", 7777);
+	s_socket.setBlocking(false);
 
-	ClientServiceRef service = MakeShared<ClientService>(
-		NetAddress(L"127.0.0.1", 7777),
-		MakeShared<IocpCore>(),
-		MakeShared<ServerSession>,
-		2);
+	if (status != sf::Socket::Done) {
+		wcout << L"서버와 연결할 수 없습니다.\n";
+		exit(-1);
+	}
 
-	ASSERT_CRASH(service->Start());
+	client_initialize();
 
-	for (int32 i = 0; i < 2; ++i)
+	string player_name{ "P" };
+	player_name += to_string(GetCurrentProcessId());
+	Protocol::C_LOGIN loginPkt;
+	loginPkt.set_name(player_name);
+	
+
+	sf::RenderWindow window(sf::VideoMode(WINDOW_WIDTH, WINDOW_HEIGHT), "2D CLIENT");
+	g_window = &window;
+
+	while (window.isOpen())
 	{
-		GThreadManager->Launch([=]()
-			{
-				while (true)
-				{
-					service->GetIocpCore()->Dispatch();
+		sf::Event event;
+		while (window.pollEvent(event))
+		{
+			if (event.type == sf::Event::Closed)
+				window.close();
+			if (event.type == sf::Event::KeyPressed) {
+				int direction = -1;
+				switch (event.key.code) {
+				case sf::Keyboard::Left:
+					direction = 2;
+					break;
+				case sf::Keyboard::Right:
+					direction = 3;
+					break;
+				case sf::Keyboard::Up:
+					direction = 0;
+					break;
+				case sf::Keyboard::Down:
+					direction = 1;
+					break;
+				case sf::Keyboard::A: {
+					/*CS_ATTACK_PACKET p;
+					p.size = sizeof(CS_ATTACK_PACKET);
+					p.type = CS_ATTACK;
+					send_packet(&p);*/
+					break;
 				}
-			});
+				case sf::Keyboard::C: {
+					cout << "메세지 입력 : ";
+					/*char chat[CHAT_SIZE];
+					cin.getline(chat, CHAT_SIZE - 1);
+					CS_CHAT_PACKET p;
+					p.size = static_cast<int>(strlen(chat)) + 3;
+					memcpy(p.mess, chat, p.size);
+					p.type = CS_CHAT;
+					cout << p.size << "바이트,	" << p.mess << endl;
+					send_packet(&p);*/
+					break;
+
+				}
+				case sf::Keyboard::Escape:
+					window.close();
+					break;
+				}
+				if (-1 != direction) {
+					/*CS_MOVE_PACKET p;
+					p.size = sizeof(p);
+					p.type = CS_MOVE;
+					p.direction = direction;
+					send_packet(&p);*/
+				}
+
+			}
+		}
+
+		window.clear();
+		client_main();
+		window.display();
 	}
+	client_finish();
 
-	Protocol::C_CHAT chatPkt;
-	u8string str{ u8"Hello World ! " };
-	chatPkt.set_msg(std::string(str.begin(), str.end()));
-	auto sendBuffer = ServerPacketHandler::MakeSendBuffer(chatPkt);
-
-	while (true)
-	{
-		service->Broadcast(sendBuffer);
-		this_thread::sleep_for(1s);
-	}
-
-	GThreadManager->Join();
+	return 0;
 }

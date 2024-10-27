@@ -24,7 +24,7 @@ private:
 	
 	map<int32, set<int32>>				_lockHistory;
 
-	Mutex _lock;
+	mutex _lock;
 
 private:
 	vector<int32> _discoveredOrder; // 노드가 발견된 순서를 기록하는 배열

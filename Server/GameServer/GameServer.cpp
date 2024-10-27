@@ -61,6 +61,14 @@ int main()
 		});
 	}
 
+	GRoom->DoTimer(100, &Room::UpdateTick);
+
+	while (true)
+	{
+		
+		this_thread::sleep_for(100ms);
+	}
+
 
 	
 
